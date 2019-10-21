@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hello</title>
+    <link href="shared/css/bootstrap.min.css" rel="stylesheet" type="text/css">
+    <script type="text/javascript" src="shared/js/jquery.min.js"></script>
+    <script type="text/javascript" src="shared/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="shared/js/blockui.min.js"></script>
+    <script type="text/javascript" src="shared/js/angular.js"></script>
+    <script type="text/javascript" src="shared/js/jquery.min.js"></script>
+</head>
+<body>
+
+<div ng-app="myApp" ng-controller="myCtrl">
+    <div><br><br><br><br><br><br></div>
+    <div class="col-lg-3" ng-show="num==0">
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+                <h3 class="panel-title">词法分析器</h3>
+            </div>
+            <div class="panel-body" ng-click="update(1)">
+                点击进入词法分析器
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3" ng-show="num==0">
+        <div class="panel panel-success">
+            <div class="panel-heading">
+                <h3 class="panel-title">语法分析器</h3>
+            </div>
+            <div class="panel-body" ng-click="update(2)">
+                点击进入语法分析器
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3" ng-show="num==0">
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h3 class="panel-title">语义分析器</h3>
+            </div>
+            <div class="panel-body" ng-click="update(3)">
+                点击进入语义分析器
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3" ng-show="num==0">
+        <div class="panel panel-warning">
+            <div class="panel-heading">
+                <h3 class="panel-title">JAVACC</h3>
+            </div>
+            <div class="panel-body" ng-click="update(4)">
+                点击进入JAVACC
+            </div>
+        </div>
+    </div>
+    <div ng-show="num!=0">
+        <div class="row">
+            <input type="file" id="file" class="col-lg-4 col-lg-offset-1" accept="text/*">
+            <button ng-click="sure()" class="btn btn-primary col-lg-1">确认</button>
+        </div>
+        <div class="row">
+            <div class="col-lg-offset-1 col-lg-5">
+                <label for="input">输入文本框</label>
+                <textarea id="input" class="form-control" rows="20" ng-bind="inputText"></textarea>
+            </div>
+            <div class="col-lg-5">
+                <label for="output">输出文本框</label>
+                <textarea id="output" class="form-control" rows="20" ng-bind="out"></textarea>
+            </div>
+        </div>
+    </div><!-- /.row -->
+</div>
+</body>
+<script type="text/javascript">
+    var app = angular.module('myApp', []);
+    app.controller('myCtrl', function ($scope, $http) {
+        $scope.num = 0;
+        $scope.out = "";
+        $scope.inputText = "";
+        $scope.sure = function () {
+            var selectedFile = document.getElementById("file").files[0];//获取读取的File对象
+
+
+            var reader = new FileReader();//读取操作就是由它完成的。
+            reader.readAsText(selectedFile);//读取文件的内容
+
+            reader.onload = function () {
+                $scope.inputText = this.result;
+                console.log(typeof $scope.inputText);
+                if($scope.num===1){
+                    $scope.getLexerRes();
+                }else if($scope.num===2){
+                    $scope.getSyntaxRes();
+                }else if($scope.num===3){
+
+                }else if($scope.num===4){
+
+                }
+
+            }
+        };
+        $scope.update=function(i){
+            $scope.num=i;
+        };
+        $scope.getSyntaxRes=function(){
+            $http({
+                method: 'POST',
+                url: 'http://localhost:8080/service/syntax',
+                data: {text: $scope.inputText}
+            }).then(function successCallback(response) {
+                $scope.out = response.data.text;
+            });
+        };
+        $scope.getLexerRes = function () {
+            $http({
+                method: 'POST',
+                url: 'http://localhost:8080/service/lexer',
+                data: {text: $scope.inputText}
+            }).then(function successCallback(response) {
+                $scope.out = response.data.text;
+            });
+
+        }
+
+
+    });
+
+</script>
+</html>
