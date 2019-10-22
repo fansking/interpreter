@@ -441,20 +441,20 @@ public class SyntaxService {
         }
         return s;
     }
-//    public static void main(String [] a){
-//        TreeNode t= syntacticAnalyse(LexicalService.lexicalAnalyse("a;//测试单独变量一行是否出错\n" +
-//                "a[3]=5;//测试数组赋值是否出错\n" +
-//                "int a =6;\n" +
-//                "real b = 3.2.4;//测试错误token赋值出错\n" +
-//                "if(a==b){\n" +
-//                "//测试空括号是否出错\n" +
-//                "}\n" +
-//                "while(a+c){\n" +
-//                "a=a+c;\n" +
-//                "}"));
-//        SyntaxException.printExceptionList();
-//        System.out.println(output(t,1));
-//
-//
-//    }
+    /*public static void main(String [] a){
+        TreeNode t= syntacticAnalyse(LexicalService.lexicalAnalyse("a;//测试单独变量一行是否出错\n" +
+                "a[3]=5;//测试数组赋值是否出错\n" +
+                "int a =6;\n" +
+                "real b = 3.2.4;//测试错误token赋值出错\n" +
+                "if(a==b){\n" +
+                "//测试空括号是否出错\n" +
+                "}\n" +
+                "while(a+c){\n" +
+                "a=a+c;\n" +
+                "}"));
+        SyntaxException.printExceptionList();
+        System.out.println(output(t,1));
+
+
+    }*/
 }

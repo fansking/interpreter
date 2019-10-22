@@ -69,10 +69,6 @@ public class Token {
             put(31, "-=");
         }
     };
-    /**
-     * 存放已定义的标识符变量
-     */
-    public static final List<String> ID_TABLE =new ArrayList<>();
     public int getType() {
         return type;
     }
