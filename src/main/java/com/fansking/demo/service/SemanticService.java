@@ -1,8 +1,6 @@
 package com.fansking.demo.service;
 
 
-import com.sun.media.jfxmedia.events.AudioSpectrumEvent;
-
 import java.util.*;
 
 import static com.fansking.demo.service.SyntaxService.syntacticAnalyse;
@@ -16,7 +14,6 @@ public class SemanticService {
     /**
      * 警告和错误信息
      */
-    private static List<String> warningInfo = new ArrayList<>();
     /**
      * 中间代码
      */
@@ -38,12 +35,7 @@ public class SemanticService {
         }
         varStack.remove(varStack.size()-1);
         StringBuilder sb = new StringBuilder();
-        sb.append("错误警告信息:\n");
-        for (String s:warningInfo
-             ) {
-            sb.append(s+"\n");
-        }
-        sb.append("中间代码过程为:\n");
+        sb.append("中间过程为:\n");
         for (String s:codes
         ) {
             sb.append(s+"\n");
@@ -63,7 +55,7 @@ public class SemanticService {
             case 35: parseIfStmt(headNode);
             break;
             //while
-            case 36:  parseWhileStmt(headNode);
+            case 36:  parseWhileStmt(headNode);break;
             //int and real
             case 37:  parseDeclareStmt(headNode);break;
             //{
@@ -72,6 +64,7 @@ public class SemanticService {
                 return ;
             case 32:
                 parseExp(headNode);
+                break;
             default:{
 
                 break;
@@ -85,7 +78,7 @@ public class SemanticService {
         if(checkNodeType(headNode.getTreeNodes().get(2),32)){
             res= parseExp(headNode.getTreeNodes().get(2));
         }else{
-            warningInfo.add("while语句出错");
+            codes.add("while语句出错");
             res= new ArrayList<>();
             res.add("literal_int");
             res.add("0");
@@ -104,7 +97,7 @@ public class SemanticService {
             if(checkNodeType(headNode.getTreeNodes().get(2),32)){
                 res= parseExp(headNode.getTreeNodes().get(2));
             }else{
-                warningInfo.add("while语句出错");
+                codes.add("while语句出错");
                 res= new ArrayList<>();
                 res.add("literal_int");
                 res.add("0");
@@ -123,6 +116,18 @@ public class SemanticService {
         }
 
     }
+    private static String getVarName(TreeNode node){
+        if(node.getTreeNodes().size()==3){
+            List<String> num = parseExp(node.getTreeNodes().get(1));
+            if(num.get(0).equals("literal_real")){
+                codes.add("数组偏移量不能是小数"+num.get(1));
+            }
+            int length = (int)Double.parseDouble(num.get(1));
+            return node.getValue()+"["+length+"]";
+        }else{
+            return node.getValue();
+        }
+    }
     /**
      * 声明语句 一定是5个或三个节点
      * @param node 头节点
@@ -138,20 +143,39 @@ public class SemanticService {
             if(node.getTreeNodes().get(3).getType()==32){
                 r2 = parseExp(node.getTreeNodes().get(3));
             }else{
-                r2 = findVar(node.getTreeNodes().get(3).getValue());
+
+                r2 = findVar(getVarName(node.getTreeNodes().get(3)),true);
             }
             if(!r2.get(0).equals(type)){
-                warningInfo.add("对"+node.getTreeNodes().get(1).getValue()+"赋值出现类型不匹配");
+                codes.add("对"+node.getTreeNodes().get(1).getValue()+"赋值出现类型不匹配");
                 r2.set(0,type);
             }
             codes.add("声明且初始化"+node.getTreeNodes().get(1).getValue()+"为"+r2.get(1));
             varStack.get(varStack.size()-1).put(node.getTreeNodes().get(1).getValue(),r2);
         }else{
+            if(node.getTreeNodes().get(1).getTreeNodes().size()==3){
+                TreeNode idNode = node.getTreeNodes().get(1);
+                List<String> num = parseExp(idNode.getTreeNodes().get(1));
+                if(num.get(0).equals("literal_real")){
+                    codes.add("数组定义长度不能是小数"+num.get(1));
+
+                }
+                int length = (int)Double.parseDouble(num.get(1));
+                r2=new ArrayList<>();
+                r2.add(type);
+                r2.add("");
+                for(int i=0;i<length;i++){
+                    varStack.get(varStack.size()-1).put(node.getTreeNodes().get(1).getValue()+"["+i+"]",r2);
+                }
+                codes.add("声明长度为"+length+"数组"+node.getTreeNodes().get(1).getValue());
+                return;
+            }
             r2=new ArrayList<>();
             r2.add(type);
             r2.add("");
             codes.add("声明"+node.getTreeNodes().get(1).getValue());
             varStack.get(varStack.size()-1).put(node.getTreeNodes().get(1).getValue(),r2);
+
         }
     }
 /**
@@ -164,7 +188,7 @@ public class SemanticService {
         if(checkNodeType(headNode.getTreeNodes().get(2),32)){
             res= parseExp(headNode.getTreeNodes().get(2));
         }else{
-            warningInfo.add("if语句出错");
+            codes.add("if语句出错");
             res= new ArrayList<>();
             res.add("literal_int");
             res.add("1");
@@ -190,11 +214,12 @@ public class SemanticService {
             return res;
         }
         if(node.getTreeNodes().size()>=3){
+            boolean flag= node.getTreeNodes().get(1).getType()==10;
             List<String> r1;
             List<String> r2;
             switch (node.getTreeNodes().get(0).getType()){
                 case 25:
-                    r1= findVar(node.getTreeNodes().get(0).getValue());
+                    r1= findVar(getVarName(node.getTreeNodes().get(0)),!flag);
                     break;
                 case 32:
                     r1= parseExp(node.getTreeNodes().get(0));
@@ -206,7 +231,7 @@ public class SemanticService {
                 case 15:
                     return parseAdditiveExp(node.getTreeNodes().get(1));
                     default:
-                        warningInfo.add("exp子节点出现错误类型");
+                        codes.add("exp子节点出现错误类型");
                         r1= new ArrayList<>();
                         r1.add("literal_int");
                         r1.add("0");
@@ -214,7 +239,7 @@ public class SemanticService {
             }
             switch (node.getTreeNodes().get(2).getType()){
                 case 25:
-                    r2= findVar(node.getTreeNodes().get(2).getValue());
+                    r2= findVar(getVarName(node.getTreeNodes().get(2)),true);
                     break;
                 case 32:
                     r2= parseExp(node.getTreeNodes().get(2));
@@ -223,14 +248,14 @@ public class SemanticService {
                     r2= parseAdditiveExp(node.getTreeNodes().get(2));
                     break;
                 default:
-                    warningInfo.add("exp子节点出现错误类型");
+                    codes.add("exp子节点出现错误类型");
                     r2= new ArrayList<>();
                     r2.add("literal_int");
                     r2.add("0");
                     break;
             }
-            if(node.getTreeNodes().get(1).getType()==10){
-                parseAssignExp(node.getTreeNodes().get(0).getValue(),r2);
+            if(flag){
+                parseAssignExp(getVarName(node.getTreeNodes().get(0)),r2);
                 return null;
             }else{
                 return parseNum(r1,r2,node.getTreeNodes().get(1).getValue());
@@ -241,7 +266,7 @@ public class SemanticService {
         List<String> r1= new ArrayList<>();
         r1.add("literal_int");
         r1.add("0");
-        warningInfo.add("exp子节点个数不正确，请查看");
+        codes.add("exp子节点个数不正确，请查看");
         return r1;
     }
 
@@ -256,9 +281,9 @@ public class SemanticService {
         if(hNode.getTreeNodes().get(0).getType()==32){
             r1= parseExp(hNode.getTreeNodes().get(0));
         }else if(hNode.getTreeNodes().get(0).getType()==25){
-            r1= findVar(hNode.getTreeNodes().get(0).getValue());
+            r1= findVar(getVarName(hNode.getTreeNodes().get(0)),true);
         }else{
-            warningInfo.add("节点异常，多项式节点的子节点类型错误");
+            codes.add("节点异常，多项式节点的子节点类型错误");
             r1= new ArrayList<>();
             r1.add("literal_int");
             r1.add("0");
@@ -266,9 +291,9 @@ public class SemanticService {
         if(hNode.getTreeNodes().get(2).getType()==32){
             r2= parseExp(hNode.getTreeNodes().get(2));
         }else if(hNode.getTreeNodes().get(2).getType()==25){
-            r2= findVar(hNode.getTreeNodes().get(2).getValue());
+            r2= findVar(getVarName(hNode.getTreeNodes().get(2)),true);
         }else{
-            warningInfo.add("节点异常，多项式节点的子节点类型错误");
+            codes.add("节点异常，多项式节点的子节点类型错误");
             r2= new ArrayList<>();
             r2.add("literal_int");
             r2.add("0");
@@ -316,7 +341,7 @@ public class SemanticService {
                 break;
             case "/":
                 if(a2 ==0){
-                    warningInfo.add("出现除零错误！！");
+                    codes.add("出现除零错误！！");
                     res =0;
                 }else{
                     res= a1/a2;
@@ -338,7 +363,7 @@ public class SemanticService {
                 res = a1!=a2?1:0;
                 break;
             default:
-                    warningInfo.add("出现运算符错误");
+                    codes.add("出现运算符错误");
                     res = 0;
                     break;
         }
@@ -378,7 +403,7 @@ public class SemanticService {
                 res = a1!=a2?1:0;
                 break;
             default:
-                warningInfo.add("出现运算符错误");
+                codes.add("出现运算符错误");
                 res = 0;
                 break;
         }
@@ -389,7 +414,7 @@ public class SemanticService {
         if(node.getType()==type){
             return true;
         }else{
-            warningInfo.add(node.getType()+"应当是"+type);
+            codes.add(node.getType()+"应当是"+type);
 //            System.err.println(node.getType()+"应当是"+type);
             return false;
         }
@@ -398,11 +423,11 @@ public class SemanticService {
      * 没有数组定义是可以接受的，但是由于初步考虑时没有考虑到数组初始化问题，所以在这里认为使用未赋值数组内容时默认为0，但是要加入警告信息
      * 如果是未定义变量也返回0
      */
-    private static List<String> findVar(String varName){
+    private static List<String> findVar(String varName,boolean flag){
         for(int j = varStack.size()-1;j>=0;j--){
             if(varStack.get(j).containsKey(varName)){
-                if(varStack.get(j).get(varName).get(1).equals("")){
-                    warningInfo.add("使用了未初始化的变量:"+varName);
+                if(varStack.get(j).get(varName).get(1).equals("")&flag){
+                    codes.add("使用了未初始化的变量:"+varName);
                     List<String> res = new ArrayList<>();
                     res.add(varStack.get(j).get(varName).get(0));
                     res.add("0");
@@ -411,7 +436,7 @@ public class SemanticService {
                 return varStack.get(j).get(varName);
             }
         }
-        warningInfo.add("使用了未定义的变量:"+varName);
+        codes.add("使用了未定义的变量:"+varName);
         List<String> res = new ArrayList<>();
         res.add("literal_int");
         res.add("0");
@@ -419,28 +444,12 @@ public class SemanticService {
     }
 
     public static void main(String []a){
-        System.out.println(semanticParse("int a =5;\n" +
-                "real b =3.3;\n" +
-                "if((a+b)>9){//测试else是否正常工作\n" +
-                "int b=6;\n" +
-                "c=5+b;\n" +
-                "\n" +
-                "}else//测试不加大括号\n" +
-                "a=6;\n" +
-                "\n" +
-                "\n" +
-                "//测试未初始化变量是否报错\n" +
-                "if((a+b)>0){\n" +
-                "int b=6;\n" +
-                "c=5+b;\n" +
-                "//测试除0报错\n" +
-                "b = b/0;\n" +
-                "}else\n" +
-                "a=6;\n" +
-                "//测试while循环是否正常工作\n" +
-                "while(a)\n" +
-                "a=a-1;\n" +
-                "\n" +
-                "b=3.6+2.4*(5+2.1)"));
+        System.out.println(semanticParse("int a[5];\n" +
+                "a[1]=3;\n" +
+                "a[2]=a[1];\n" +
+                "if(a[3]>5)\n" +
+                "a[1]=a[1]+1;\n" +
+                "a[5]=4.4;\n"));
+
     }
 }
