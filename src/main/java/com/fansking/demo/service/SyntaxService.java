@@ -1,6 +1,6 @@
 package com.fansking.demo.service;
 
-import com.alibaba.fastjson.JSON;
+
 
 import java.util.Collections;
 import java.util.LinkedList;
@@ -441,7 +441,7 @@ public class SyntaxService {
         }
         return s;
     }
-    /*public static void main(String [] a){
+    public static void main(String [] a){
         TreeNode t= syntacticAnalyse(LexicalService.lexicalAnalyse("a;//测试单独变量一行是否出错\n" +
                 "a[3]=5;//测试数组赋值是否出错\n" +
                 "int a =6;\n" +
@@ -456,5 +456,5 @@ public class SyntaxService {
         System.out.println(output(t,1));
 
 
-    }*/
+    }
 }
