@@ -24,6 +24,8 @@ public class SemanticService {
      */
     private static List<Map<String, List<String>>> varStack = new ArrayList<>();
     public static String semanticParse(String text){
+        codes.clear();
+        varStack.clear();
         TreeNode t= syntacticAnalyse(LexicalService.lexicalAnalyse(text));
         String syntaxException = SyntaxException.printExceptionList();
         if (syntaxException.length()>0){
@@ -111,7 +113,19 @@ public class SemanticService {
                                        List<String> r2){
         for(int j = varStack.size()-1;j>=0;j--){
             if(varStack.get(j).containsKey(varName)){
-                varStack.get(j).replace(varName,r2);
+                if(varStack.get(j).get(varName).get(0).equals(r2.get(0)) || varStack.get(j).get(varName).get(0).equals("literal_real")){
+                    varStack.get(j).replace(varName,r2);
+                    codes.add("变量"+varName+"被赋值为"+r2.get(1));
+                    return;
+                }else{
+                    codes.add("变量赋值类型不匹配，自动转换类型");
+                    r2.set(1,r2.get(1).split("\\.")[0]);
+                    r2.set(0,"literal_int");
+                    varStack.get(j).replace(varName,r2);
+                    codes.add("变量"+varName+"被赋值为"+r2.get(1));
+                    return;
+                }
+
             }
         }
 
@@ -282,6 +296,8 @@ public class SemanticService {
             r1= parseExp(hNode.getTreeNodes().get(0));
         }else if(hNode.getTreeNodes().get(0).getType()==25){
             r1= findVar(getVarName(hNode.getTreeNodes().get(0)),true);
+        }else if(hNode.getTreeNodes().get(0).getType()==33){
+            r1=parseAdditiveExp(hNode.getTreeNodes().get(0));
         }else{
             codes.add("节点异常，多项式节点的子节点类型错误");
             r1= new ArrayList<>();
@@ -292,7 +308,10 @@ public class SemanticService {
             r2= parseExp(hNode.getTreeNodes().get(2));
         }else if(hNode.getTreeNodes().get(2).getType()==25){
             r2= findVar(getVarName(hNode.getTreeNodes().get(2)),true);
-        }else{
+        }else if(hNode.getTreeNodes().get(2).getType()==33){
+            r2=parseAdditiveExp(hNode.getTreeNodes().get(2));
+        }
+        else{
             codes.add("节点异常，多项式节点的子节点类型错误");
             r2= new ArrayList<>();
             r2.add("literal_int");
@@ -436,7 +455,7 @@ public class SemanticService {
                 return varStack.get(j).get(varName);
             }
         }
-        codes.add("使用了未定义的变量:"+varName);
+        codes.add("使用了未声明的变量:"+varName);
         List<String> res = new ArrayList<>();
         res.add("literal_int");
         res.add("0");

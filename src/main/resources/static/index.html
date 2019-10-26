@@ -93,12 +93,21 @@
                 }else if($scope.num===2){
                     $scope.getSyntaxRes();
                 }else if($scope.num===3){
-
+                    $scope.getSemanticRes();
                 }else if($scope.num===4){
 
                 }
 
             }
+        };
+        $scope.getSemanticRes=function(){
+            $http({
+                method: 'POST',
+                url: 'http://localhost:8080/service/semantic',
+                data: {text: $scope.inputText}
+            }).then(function successCallback(response) {
+                $scope.out = response.data.text;
+            });
         };
         $scope.update=function(i){
             $scope.num=i;

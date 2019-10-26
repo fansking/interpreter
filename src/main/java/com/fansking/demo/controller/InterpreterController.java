@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.fansking.demo.service.SemanticService.semanticParse;
 import static com.fansking.demo.service.SyntaxService.syntacticAnalyse;
 
 /**
@@ -29,6 +30,10 @@ public class InterpreterController {
 
     }
 
+    @PostMapping("/semantic")
+    public ParamData getSemantic(@RequestBody ParamData data){
+        return new ParamData(semanticParse(data.getText()));
+    }
 
 }
 
