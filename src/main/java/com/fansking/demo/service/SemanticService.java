@@ -235,6 +235,9 @@ public class SemanticService {
             res.add(node.getTreeNodes().get(0).getValue());
             return res;
         }
+        if(node.getTreeNodes().size()==1&& (node.getTreeNodes().get(0).getType()==33 )){
+            return parseAdditiveExp(node.getTreeNodes().get(0));
+        }
         if(node.getTreeNodes().size()>=3){
             boolean flag= node.getTreeNodes().get(1).getType()==10;
             List<String> r1;
@@ -251,7 +254,7 @@ public class SemanticService {
                     break;
                     //如果是左括号，那么不需要对其分析他一定是（AdditiveExp）直接返回AdditiveExp的值就好
                 case 15:
-                    return parseAdditiveExp(node.getTreeNodes().get(1));
+                    return parseExp(node.getTreeNodes().get(1));
                     default:
                         codes.add("exp子节点出现错误类型");
                         r1= new ArrayList<>();

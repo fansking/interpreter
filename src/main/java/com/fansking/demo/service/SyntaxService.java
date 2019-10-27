@@ -110,26 +110,30 @@ public class SyntaxService {
             node.getTreeNodes().add(logicalOp());
             node.getTreeNodes().add(addtiveExp());
         } else {
-            return leftNode;
+            node.getTreeNodes().add( leftNode);
         }
         return node;
     }
     /**
-     * 多项式，左结合是先算右边的
+     * 多项式，左结合是先算左边的
      */
     private static TreeNode addtiveExp() {
         TreeNode node = new TreeNode(33);
         TreeNode leftNode = term();
-        if (checkNextTokenType(6)) {
+//       TreeNode pNode = new TreeNode(33);
+        if (checkNextTokenType(6,7)) {
             node.getTreeNodes().add(leftNode);
             node.getTreeNodes().add(addtiveOp());
-            node.getTreeNodes().add(addtiveExp());
-        } else if (checkNextTokenType(7)) {
-            node.getTreeNodes().add(leftNode);
-            node.getTreeNodes().add(addtiveOp());
-            node.getTreeNodes().add(addtiveExp());
+            node.getTreeNodes().add(term());
         } else {
             return leftNode;
+        }
+        while (checkNextTokenType(6,7)){
+            TreeNode pNode = new TreeNode(33);
+            pNode.getTreeNodes().add(node);
+            pNode.getTreeNodes().add(addtiveOp());
+            pNode.getTreeNodes().add(term());
+            node = pNode;
         }
         return node;
     }
