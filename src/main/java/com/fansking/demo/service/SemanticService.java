@@ -156,9 +156,17 @@ public class SemanticService {
 
             if(node.getTreeNodes().get(3).getType()==32){
                 r2 = parseExp(node.getTreeNodes().get(3));
-            }else{
+            }else if(node.getTreeNodes().get(3).getType()==25){
 
                 r2 = findVar(getVarName(node.getTreeNodes().get(3)),true);
+            }else if(node.getTreeNodes().get(3).getType()==33){
+                r2 =parseAdditiveExp(node.getTreeNodes().get(3));
+
+            }else{
+                codes.add("声明赋值变量时出现意外节点类型"+node.getTreeNodes().get(3).getValue());
+                r2 = new ArrayList<>();
+                r2.add(type);
+                r2.add("0");
             }
             if(!r2.get(0).equals(type)){
                 codes.add("对"+node.getTreeNodes().get(1).getValue()+"赋值出现类型不匹配");
