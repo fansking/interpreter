@@ -40,6 +40,7 @@ public class SyntaxService {
             //while
             case 3: return parseWhileStmt();
             //int and real
+            //function
             case 4:
             case 5: return parseDeclareStmt();
             //{
@@ -263,8 +264,14 @@ private static TreeNode parsePrintStmt(){
         return null;
     }
     private static TreeNode parseDeclareStmt() {
+        //可能是函数或定义变量
+        TreeNode funNode = new TreeNode(38);
+
+
+
         TreeNode node = new TreeNode(37);
         node.getTreeNodes().add(new TreeNode(getNextTokenType()));
+        funNode.getTreeNodes().add(new TreeNode(getNextTokenType()));
         TreeNode varNode = new TreeNode();
         if (checkNextTokenType(4, 5)) {
             currentToken = iterator.next();
@@ -276,8 +283,15 @@ private static TreeNode parsePrintStmt(){
             varNode.setType(currentToken.getType());
             varNode.setValue(currentToken.getValue());
             node.getTreeNodes().add(varNode);
+            funNode.getTreeNodes().add(varNode);
         } else {
             SyntaxException.addSyntaxException(getNextTokenLineNo(currentToken),"缺少标识符");
+        }
+
+        if(checkNextTokenType(17)){
+            varNode.setType(39);
+            funNode.getTreeNodes().add(parseStmtBlock());
+            return funNode;
         }
         if (getNextTokenType() == 19) {
             //数组

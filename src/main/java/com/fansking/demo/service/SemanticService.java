@@ -26,8 +26,9 @@ public class SemanticService {
      * key:变量名   value:第一位是类型，第二位是值
      */
     private static List<Map<String, List<String>>> varStack = new ArrayList<>();
-
+    private static Map<String, TreeNode> funStack =new HashMap<>();
     public static String semanticParse(String text) {
+        funStack.clear();
         codes.clear();
         varStack.clear();
         out.clear();
@@ -89,13 +90,22 @@ public class SemanticService {
             case 91:
                 parseScanStmt(headNode);
                 break;
+            case 38:
+                parseFunStmt(headNode);
+                break;
             default: {
 
                 break;
             }
         }
     }
+    private static void parseFunStmt(TreeNode headNode){
 
+        TreeNode funNode = headNode.getTreeNodes().get(2);
+        TreeNode nameNode = headNode.getTreeNodes().get(1);
+        codes.add("定义方法"+nameNode.getValue());
+        funStack.put(nameNode.getValue(),funNode);
+    }
     private static void parsePrintStmt(TreeNode headNode) {
         out.add(findVar(headNode.getTreeNodes().get(1).getValue(), true).get(1));
     }
@@ -288,6 +298,11 @@ public class SemanticService {
      * @param node 头节点
      */
     private static List<String> parseExp(TreeNode node) {
+        if(node.getTreeNodes().size() == 2 && node.getTreeNodes().get(0).getType() == 25&& funStack.containsKey(node.getTreeNodes().get(0).getValue())){
+            codes.add("调用方法"+node.getTreeNodes().get(0).getValue());
+            parseHeadNode(funStack.get(node.getTreeNodes().get(0).getValue()));
+            return null;
+        }
         if (node.getTreeNodes().size() == 1 && (node.getTreeNodes().get(0).getType() == 26 || node.getTreeNodes().get(0).getType() == 27)) {
             List<String> res = new ArrayList<>();
             res.add(TreeNode.TABLE.get(node.getTreeNodes().get(0).getType()));

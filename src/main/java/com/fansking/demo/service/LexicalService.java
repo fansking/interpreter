@@ -72,6 +72,17 @@ public class LexicalService {
             }
             //简单特殊符号
             switch (currentChar) {
+                case '|':
+                    tokenList.add(new Token(93,lineNo));
+                    readChar();
+                    continue;
+                case '&':
+                    tokenList.add(new Token(92,lineNo));
+                    readChar();
+                    continue;
+                case '^':tokenList.add(new Token(94,lineNo));
+                    readChar();
+                    continue;
                 case ';':
                     tokenList.add(new Token(21, lineNo));
                     readChar();
