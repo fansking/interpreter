@@ -9,8 +9,7 @@ import static com.fansking.demo.service.SyntaxService.syntacticAnalyse;
 
 
 public class SemanticService {
-    //    private static Map<String, List<String>> ID_TABLE = new HashMap<>();
-//    private static Stack<TreeNode> stack = new Stack<>();
+
     private static TreeNode currentParentNode;
     /**
      * 警告和错误信息

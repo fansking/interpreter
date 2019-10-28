@@ -386,7 +386,7 @@ private static TreeNode parsePrintStmt(){
         return false;
     }
     /**
-     * 获取下一个token的type,如果没有下一个token,则返回0
+     * 获取下一个token的type,如果没有下一个token,则返回-2
      */
     private static int getNextTokenType() {
         if (iterator.hasNext()) {
@@ -394,7 +394,7 @@ private static TreeNode parsePrintStmt(){
             iterator.previous();
             return type;
         }
-        return 0;
+        return -2;
     }
     /**
      * 获取下一个token的value,如果没有下一个token,则返回空字符串
@@ -446,6 +446,9 @@ private static TreeNode parsePrintStmt(){
     private static void consumeNextToken(int type,TreeNode node){
         if (iterator.hasNext()) {
             currentToken = iterator.next();
+            if(null == currentToken){
+                return;
+            }
             if (currentToken.getType() == type) {
                 node.getTreeNodes().add(new TreeNode(type));
                 return;
