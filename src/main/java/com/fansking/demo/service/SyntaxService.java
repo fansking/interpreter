@@ -109,8 +109,11 @@ public class SyntaxService {
             node.getTreeNodes().add(leftNode);
             node.getTreeNodes().add(logicalOp());
             node.getTreeNodes().add(addtiveExp());
-        } else {
+        } else if(leftNode.getType()==33){
             node.getTreeNodes().add( leftNode);
+            return node;
+        }else{
+            return leftNode;
         }
         return node;
     }

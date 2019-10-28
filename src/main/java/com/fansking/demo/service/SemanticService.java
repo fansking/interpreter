@@ -151,6 +151,9 @@ public class SemanticService {
         if(node.getTreeNodes().get(0).getType()==5){
             type = "literal_real";
         }
+        if(findVarInSingleLayer(node.getTreeNodes().get(1).getValue())){
+            codes.add("变量"+node.getTreeNodes().get(1).getValue()+"已经声明过");
+        }
         List<String> r2;
         if(node.getTreeNodes().size()==5){
 
@@ -448,6 +451,10 @@ public class SemanticService {
 //            System.err.println(node.getType()+"应当是"+type);
             return false;
         }
+    }
+    private static Boolean findVarInSingleLayer(String varName){
+        int index = varStack.size()-1;
+        return varStack.get(index).containsKey(varName);
     }
     /**
      * 没有数组定义是可以接受的，但是由于初步考虑时没有考虑到数组初始化问题，所以在这里认为使用未赋值数组内容时默认为0，但是要加入警告信息
