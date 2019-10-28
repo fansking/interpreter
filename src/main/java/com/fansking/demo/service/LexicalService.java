@@ -196,6 +196,7 @@ public class LexicalService {
                 boolean isZero = false;
                 boolean isReal = false;
                 boolean isError = false;
+                boolean isF=false;
                 if (currentChar=='0'){
                     isZero=true;
                 }
@@ -210,6 +211,21 @@ public class LexicalService {
 
                     sb.append(currentChar);
                     readChar();
+                }
+                if (tokenList.size()==1){
+                    if(tokenList.get(tokenList.size()-1).getType()==7){
+                        isF =true;
+                        tokenList.remove(tokenList.size()-1);
+                    }
+                }else if(tokenList.size()>1){
+                    if(tokenList.get(tokenList.size()-1).getType()==7&&(tokenList.get(tokenList.size()-2).getType()==10||
+                            tokenList.get(tokenList.size()-2).getType()==15)){
+                        isF=true;
+                        tokenList.remove(tokenList.size()-1);
+                    }
+                }
+                if(isF){
+                    sb.insert(0,"-");
                 }
                 if (isReal && !isError) {
                     tokenList.add(new Token(27, sb.toString(), lineNo));
