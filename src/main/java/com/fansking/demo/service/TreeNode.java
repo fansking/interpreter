@@ -74,6 +74,8 @@ public class TreeNode {
             put(35,"if_stmt");
             put(36,"while_stmt");
             put(37,"assign_stmt");
+            put(90,"print");
+            put(91,"scan");
         }
     };
 

@@ -46,6 +46,10 @@ public class SyntaxService {
             case 17: return parseStmtBlock();
             // id
             case 25: return parseAssignStmt();
+            case 90:
+                return parsePrintStmt();
+            case 91:
+                return parseScanStmt();
             default:{
                 //consumeNextToken(type);
                 SyntaxException.addSyntaxException(getNextTokenLineNo(currentToken),"语句首token错误"+(type+getNextTokenValue()));
@@ -53,7 +57,28 @@ public class SyntaxService {
             }
         }
     }
-
+private static TreeNode parsePrintStmt(){
+    TreeNode node = new TreeNode(90);
+    consumeNextToken(90);
+    consumeNextToken(15,node);
+    if(checkNextTokenType(25)){
+        node.getTreeNodes().add(variableName());
+    }
+    consumeNextToken(16,node);
+    consumeNextToken(21,node);
+    return node;
+}
+    private static TreeNode parseScanStmt(){
+        TreeNode node = new TreeNode(91);
+        consumeNextToken(91);
+        consumeNextToken(15,node);
+        if(checkNextTokenType(25)){
+            node.getTreeNodes().add(variableName());
+        }
+        consumeNextToken(16,node);
+        consumeNextToken(21,node);
+        return node;
+    }
     /**
      * assign语句
      */

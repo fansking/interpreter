@@ -67,6 +67,8 @@ public class Token {
             put(29, ">=");
             put(30, "+=");
             put(31, "-=");
+            put(90,"print");
+            put(91,"scan");
         }
     };
     public int getType() {

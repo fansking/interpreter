@@ -245,6 +245,10 @@ public class LexicalService {
                     tokenList.add(new Token(4, lineNo));
                 } else if (sbString.equals("real")) {
                     tokenList.add(new Token(5, lineNo));
+                }else if(sbString.equals("print")){
+                    tokenList.add(new Token(90, lineNo));
+                }else if(sbString.equals("scan")){
+                    tokenList.add(new Token(91, lineNo));
                 }else if(sbString.charAt(sbString.length()-1)=='_'){
                     tokenList.add(new Token(-1, sbString+"命名错误,变量名不能以_结尾",lineNo));
                 }
