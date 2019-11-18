@@ -82,9 +82,17 @@ private static TreeNode parsePrintStmt(){
     TreeNode node = new TreeNode(90);
     consumeNextToken(90);
     consumeNextToken(15,node);
-    if(checkNextTokenType(25)){
-        node.getTreeNodes().add(variableName());
-    }
+//    while (!checkNextTokenType(16)){
+//        if(checkNextTokenType(25)){
+//            node.getTreeNodes().add(variableName());
+//        }else{
+//           int type = getNextTokenType();
+//           consumeNextToken(type,node);
+//        }
+//
+//    }
+    node.getTreeNodes().add(parseExp());
+
     consumeNextToken(16,node);
     consumeNextToken(21,node);
     return node;
@@ -266,7 +274,9 @@ private static TreeNode parsePrintStmt(){
 
                 default:
                     //返回的不是expNode
-                    return variableName();
+                    expNode.getTreeNodes().add(variableName());
+                    //return variableName();
+                    return expNode;
             }
             return expNode;
         }

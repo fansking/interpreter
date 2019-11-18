@@ -162,7 +162,18 @@ public class SemanticService {
         funStack.put(nameNode.getValue(),funNode);
     }
     private static void parsePrintStmt(TreeNode headNode) {
-        out.add(findVar(headNode.getTreeNodes().get(1).getValue(), true).get(1));
+        /*if(headNode.getTreeNodes().size()>4){
+//            if(headNode.getTreeNodes().get(0).getValue()=="-"){
+//
+//            }else{
+//
+//            }
+            out.add("-"+findVar(getVarName(headNode.getTreeNodes().get(2)), true).get(1));
+        }else{
+            out.add(findVar(getVarName(headNode.getTreeNodes().get(1)), true).get(1));
+        }*/
+        out.add(parseExp(headNode.getTreeNodes().get(1)).get(1));
+
     }
 
     private static void parseScanStmt(TreeNode node) {
@@ -460,6 +471,9 @@ public class SemanticService {
         }
         if (node.getTreeNodes().size() == 1 && (node.getTreeNodes().get(0).getType() == 33)) {
             return parseAdditiveExp(node.getTreeNodes().get(0));
+        }
+        if(node.getTreeNodes().size() == 1 &&node.getTreeNodes().get(0).getType()==25){
+            return findVar(getVarName(node.getTreeNodes().get(0)), true);
         }
         if (node.getTreeNodes().size() >= 3) {
             boolean flag = node.getTreeNodes().get(1).getType() == 10;

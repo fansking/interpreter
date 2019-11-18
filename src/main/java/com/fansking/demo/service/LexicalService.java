@@ -236,10 +236,13 @@ public class LexicalService {
                     }
                 }else if(tokenList.size()>1){
                     if(tokenList.get(tokenList.size()-1).getType()==7&&(tokenList.get(tokenList.size()-2).getType()==10||
-                            tokenList.get(tokenList.size()-2).getType()==15)){
+                            tokenList.get(tokenList.size()-2).getType()==15||
+                            tokenList.get(tokenList.size()-2).getType()==95||
+                            tokenList.get(tokenList.size()-2).getType()==17)){
                         isF=true;
                         tokenList.remove(tokenList.size()-1);
                     }
+
                 }
                 if(isF){
                     sb.insert(0,"-");
