@@ -10,7 +10,7 @@ import static com.fansking.demo.service.SyntaxService.syntacticAnalyse;
 
 public class SemanticService {
 
-    private static TreeNode currentParentNode;
+
     /**
      * 警告和错误信息
      */
@@ -27,11 +27,14 @@ public class SemanticService {
      */
     private static List<Map<String, List<String>>> varStack = new ArrayList<>();
     private static Map<String, TreeNode> funStack =new HashMap<>();
+    private static boolean continueFlag =false;
+    private static boolean breakFlag =false;
     public static String semanticParse(String text) {
         funStack.clear();
         codes.clear();
         varStack.clear();
         out.clear();
+        breakFlag = continueFlag =false;
         TreeNode t = syntacticAnalyse(LexicalService.lexicalAnalyse(text));
         String syntaxException = SyntaxException.printExceptionList();
         if (syntaxException.length() > 0) {
@@ -57,6 +60,9 @@ public class SemanticService {
     }
 
     private static void parseHeadNode(TreeNode headNode) {
+        if(breakFlag||continueFlag){
+            return;
+        }
         switch (headNode.getType()) {
             case 0:
                 varStack.add(new HashMap<>());
@@ -64,6 +70,9 @@ public class SemanticService {
                     parseHeadNode(node);
                 }
                 varStack.remove(varStack.size() - 1);
+                break;
+            case 40:
+                parseForStmt(headNode);
                 break;
             //if
             case 35:
@@ -93,11 +102,57 @@ public class SemanticService {
             case 38:
                 parseFunStmt(headNode);
                 break;
+            case 98:
+                continueFlag =true;
+                codes.add("执行continue语句");
+                break;
+            case 99:
+                breakFlag =true;
+                codes.add("执行break语句");
+                break;
             default: {
 
                 break;
             }
         }
+    }
+
+    /**
+     * for ( assign_exp exp exp ) S
+     * @param headNode
+     */
+    private static void parseForStmt(TreeNode headNode){
+        parseHeadNode(headNode.getTreeNodes().get(2));
+        List<String> res;
+        if (checkNodeType(headNode.getTreeNodes().get(3), 32)) {
+            res = parseExp(headNode.getTreeNodes().get(3));
+        }else{
+            codes.add("for语句出错");
+            res = new ArrayList<>();
+            res.add("literal_int");
+            res.add("0");
+        }
+        //重复执行a[6]
+        while (Double.parseDouble(res.get(1)) > 0){
+            codes.add("for语句判断条件成立" + res.get(1) + ">0");
+            parseHeadNode(headNode.getTreeNodes().get(6));
+            parseHeadNode(headNode.getTreeNodes().get(4));
+            if(breakFlag){
+                break;
+            }
+            if (checkNodeType(headNode.getTreeNodes().get(3), 32)) {
+                res = parseExp(headNode.getTreeNodes().get(3));
+            } else {
+                codes.add("for语句出错");
+                res = new ArrayList<>();
+                res.add("literal_int");
+                res.add("0");
+            }
+            breakFlag = continueFlag =false;
+        }
+        breakFlag = continueFlag =false;
+        codes.add("跳出循环");
+
     }
     private static void parseFunStmt(TreeNode headNode){
 
@@ -120,6 +175,7 @@ public class SemanticService {
             r2.add(r1.get(0));
             String num = "0";
             try {
+                System.out.println("请输入一个数字");
                 num = br.readLine();
 
             } catch (Exception e) {
@@ -144,17 +200,12 @@ public class SemanticService {
             res.add("literal_int");
             res.add("0");
         }
-
-//        if(Double.parseDouble(res.get(1))>0){
-//            codes.add("while语句判断条件成立"+res.get(1)+">0");
-//            parseHeadNode(headNode.getTreeNodes().get(4));
-//        }else if(Double.parseDouble(res.get(1))<=0){
-//            codes.add("while语句判断条件失败"+res.get(1)+"<0,跳出循环");
-//
-//        }
         while (Double.parseDouble(res.get(1)) > 0) {
             codes.add("while语句判断条件成立" + res.get(1) + ">0");
             parseHeadNode(headNode.getTreeNodes().get(4));
+            if(breakFlag){
+                break;
+            }
             if (checkNodeType(headNode.getTreeNodes().get(2), 32)) {
                 res = parseExp(headNode.getTreeNodes().get(2));
             } else {
@@ -163,8 +214,11 @@ public class SemanticService {
                 res.add("literal_int");
                 res.add("0");
             }
+            breakFlag = continueFlag =false;
+
         }
-        codes.add("while语句判断条件失败" + res.get(1) + "<0,跳出循环");
+        breakFlag = continueFlag =false;
+        codes.add("跳出循环");
 
     }
 
@@ -172,7 +226,8 @@ public class SemanticService {
                                        List<String> r2) {
         for (int j = varStack.size() - 1; j >= 0; j--) {
             if (varStack.get(j).containsKey(varName)) {
-                if (varStack.get(j).get(varName).get(0).equals(r2.get(0)) || varStack.get(j).get(varName).get(0).equals("literal_real")) {
+                if (varStack.get(j).get(varName).get(0).equals(r2.get(0))
+                        || varStack.get(j).get(varName).get(0).equals("literal_real")) {
                     varStack.get(j).replace(varName, r2);
                     codes.add("变量" + varName + "被赋值为" + r2.get(1));
                     return;
@@ -191,13 +246,20 @@ public class SemanticService {
     }
 
     private static String getVarName(TreeNode node) {
-        if (node.getTreeNodes().size() == 3) {
-            List<String> num = parseExp(node.getTreeNodes().get(1));
-            if (num.get(0).equals("literal_real")) {
-                codes.add("数组偏移量不能是小数" + num.get(1));
+        if (node.getTreeNodes().size() >= 3) {
+            String idName = node.getValue();
+            int nowIndex = 1;
+            while(nowIndex<node.getTreeNodes().size()){
+                List<String> num = parseExp(node.getTreeNodes().get(nowIndex));
+                if (num.get(0).equals("literal_real")) {
+                    codes.add("数组偏移量不能是小数" + num.get(1));
+
+                }
+                nowIndex+=3;
+                idName+="["+(int) Double.parseDouble(num.get(1))+"]";
             }
-            int length = (int) Double.parseDouble(num.get(1));
-            return node.getValue() + "[" + length + "]";
+
+            return idName;
         } else {
             return node.getValue();
         }
@@ -218,7 +280,30 @@ public class SemanticService {
         }
         List<String> r2;
         if (node.getTreeNodes().size() == 5) {
+            //如果是数组赋值
+            if (node.getTreeNodes().get(1).getTreeNodes().size() == 3) {
+                TreeNode idNode = node.getTreeNodes().get(1);
+                List<String> num = parseExp(idNode.getTreeNodes().get(1));
+                if (num.get(0).equals("literal_real")) {
+                    codes.add("数组定义长度不能是小数" + num.get(1));
+                }
+                int length = (int) Double.parseDouble(num.get(1));
+                TreeNode valueNodes=node.getTreeNodes().get(3);
 
+                for (int i = 0; i < length; i++) {
+                    r2 = new ArrayList<>();
+                    r2.add(type);
+                    if(i<valueNodes.getTreeNodes().size()){
+                        r2.add(parseExp(valueNodes.getTreeNodes().get(i)).get(1));
+                    }else{
+                        r2.add("0");
+                    }
+                    varStack.get(varStack.size() - 1).put(node.getTreeNodes().get(1).getValue() + "[" + i + "]", r2);
+                }
+                codes.add("声明且赋值长度为" + length + "数组" + node.getTreeNodes().get(1).getValue());
+                return;
+            }
+            //变量赋值
             if (node.getTreeNodes().get(3).getType() == 32) {
                 r2 = parseExp(node.getTreeNodes().get(3));
             } else if (node.getTreeNodes().get(3).getType() == 25) {
@@ -240,21 +325,51 @@ public class SemanticService {
             codes.add("声明且初始化" + node.getTreeNodes().get(1).getValue() + "为" + r2.get(1));
             varStack.get(varStack.size() - 1).put(node.getTreeNodes().get(1).getValue(), r2);
         } else {
-            if (node.getTreeNodes().get(1).getTreeNodes().size() == 3) {
+            //数组初始化
+            if (node.getTreeNodes().get(1).getTreeNodes().size() >= 3) {
                 TreeNode idNode = node.getTreeNodes().get(1);
-                List<String> num = parseExp(idNode.getTreeNodes().get(1));
-                if (num.get(0).equals("literal_real")) {
-                    codes.add("数组定义长度不能是小数" + num.get(1));
+                int nowIndex = 1;
+                List<Integer> numList = new ArrayList<>();
+                //数组总长度
+                int length = 1;
+                //index+3
+                while(nowIndex<idNode.getTreeNodes().size()){
+                    List<String> num = parseExp(idNode.getTreeNodes().get(1));
+                    if (num.get(0).equals("literal_real")) {
+                        codes.add("数组定义长度不能是小数" + num.get(1));
 
+                    }
+                    length*=(int) Double.parseDouble(num.get(1));
+                    numList.add((int) Double.parseDouble(num.get(1)));
+                    nowIndex+=3;
                 }
-                int length = (int) Double.parseDouble(num.get(1));
                 r2 = new ArrayList<>();
                 r2.add(type);
                 r2.add("");
-                for (int i = 0; i < length; i++) {
-                    varStack.get(varStack.size() - 1).put(node.getTreeNodes().get(1).getValue() + "[" + i + "]", r2);
+                List<Integer> nowList = new ArrayList<>();
+                int weiDu=numList.size();
+                for(int i=0;i<numList.size();i++){
+                    nowList.add(0);
                 }
-                codes.add("声明长度为" + length + "数组" + node.getTreeNodes().get(1).getValue());
+                for(int i=0;i<length;i++){
+                    String idName=node.getTreeNodes().get(1).getValue();
+                    for(int j=0;j<weiDu;j++){
+                        idName+="["+nowList.get(j)+"]";
+                    }
+                    varStack.get(varStack.size() - 1).put(idName, r2);
+
+                    for(int j=weiDu-1;j>=0;j--){
+                        nowList.set(j,nowList.get(j)+1);
+                        if(nowList.get(j)%numList.get(j)==0){
+                            nowList.set(j,0);
+                        }else{
+                            break;
+                        }
+                    }
+
+                }
+                codes.add("声明数组" + node.getTreeNodes().get(1).getValue());
+
                 return;
             }
             r2 = new ArrayList<>();
@@ -268,7 +383,8 @@ public class SemanticService {
 
     /**
      * 如果是if语句那么他的第三个节点一定是exp类型，第五个节点是一个（0，S）或某个语句，第六个是else或者没有
-     *
+     *if ( exp ) S else-if ( exp ) S else
+     * 0 1  2  3 4  5      6   7 8 9  10
      * @param headNode 头节点
      */
 
@@ -282,14 +398,47 @@ public class SemanticService {
             res.add("literal_int");
             res.add("1");
         }
+        int nowIndex=5;
         if (Double.parseDouble(res.get(1)) > 0) {
             codes.add("if语句判断条件成立" + res.get(1) + ">0");
             parseHeadNode(headNode.getTreeNodes().get(4));
         } else if (Double.parseDouble(res.get(1)) <= 0 && headNode.getTreeNodes().size() > 5) {
-            codes.add("if语句判断条件失败" + res.get(1) + "<=0,执行else语句");
-            parseHeadNode(headNode.getTreeNodes().get(6));
+            codes.add("if语句判断条件失败" + res.get(1) + "<=0,执行下边的语句");
+            while(nowIndex<headNode.getTreeNodes().size()){
+                if(headNode.getTreeNodes().get(nowIndex).getType()==96){
+                    if(parseElseIfStmt(headNode.getTreeNodes().get(nowIndex+2))){
+                        parseHeadNode(headNode.getTreeNodes().get(nowIndex+4));
+                        break;
+                    }else{
+                        nowIndex+=5;
+                    }
+                }else if(headNode.getTreeNodes().get(nowIndex).getType()==2){
+                    parseHeadNode(headNode.getTreeNodes().get(nowIndex+1));
+                    break;
+                }
+            }
+            //codes.add("if语句判断条件失败" + res.get(1) + "<=0,执行else语句");
+
         }
 
+    }
+    private static boolean parseElseIfStmt(TreeNode node){
+        List<String> res;
+        if (checkNodeType(node, 32)) {
+            res = parseExp(node);
+        } else {
+            codes.add("else-if语句出错");
+            res = new ArrayList<>();
+            res.add("literal_int");
+            res.add("1");
+        }
+        if (Double.parseDouble(res.get(1)) > 0) {
+            codes.add("elif语句判断条件成功" + res.get(1) + ">=0");
+            return true;
+        }else{
+            codes.add("elif语句判断条件失败" + res.get(1) + "<=0");
+            return false;
+        }
     }
 
     /**
@@ -466,6 +615,15 @@ public class SemanticService {
                 break;
             case "<>":
                 res = a1 != a2 ? 1 : 0;
+                break;
+            case "==":
+                res = a1 == a2 ? 1 : 0;
+                break;
+            case "&":
+                res = (a1>0) && (a2>0) ? 1 : 0;
+                break;
+            case "|":
+                res = (a1>0) || (a2>0) ? 1 : 0;
                 break;
             default:
                 codes.add("出现运算符错误");

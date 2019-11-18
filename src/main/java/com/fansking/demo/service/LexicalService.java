@@ -26,7 +26,7 @@ public class LexicalService {
      */
     private static int currentPosition;
     /**
-     * 在扫描中实时改变的临时字符位置
+     * 源程序字符串
      */
     public static String text;
 
@@ -39,11 +39,7 @@ public class LexicalService {
         }else{
             currentPosition += 1;
         }
-
-
-        currentPosition += 1;
-
-
+       currentPosition += 1;
         if (currentChar == '\n') {
             lineNo++;
         }
@@ -72,6 +68,10 @@ public class LexicalService {
             }
             //简单特殊符号
             switch (currentChar) {
+                case ',':
+                    tokenList.add(new Token(95,lineNo));
+                    readChar();
+                    continue;
                 case '|':
                     tokenList.add(new Token(93,lineNo));
                     readChar();
@@ -127,7 +127,6 @@ public class LexicalService {
             if (currentChar == '/') {
                 readChar();
                 if (currentChar == '*') {
-
                     readChar();
                     //使用死循环消耗多行注释内字符
                     while (true) {
@@ -139,12 +138,19 @@ public class LexicalService {
                             }
                         } else {
                             readChar();
+                            if(currentPosition>text.length()){
+                                tokenList.add(new Token(-1,"多行注释未闭合",currentLineNo));
+                                break;
+                            }
                         }
                     }
                     continue;
                 } else if (currentChar == '/') {
                     while (currentChar != '\n') {
                         readChar();
+                        if(currentPosition>text.length()){
+                            break;
+                        }
                     }
                     continue;
                 } else {
@@ -251,7 +257,8 @@ public class LexicalService {
                 continue;
             }
             //标识符,包括保留字和ID
-            if ((currentChar >= 'a' && currentChar <= 'z') || currentChar == '_'|| (currentChar >= 'A' && currentChar <= 'Z')) {
+            if ((currentChar >= 'a' && currentChar <= 'z') || currentChar == '_'
+                    || (currentChar >= 'A' && currentChar <= 'Z')) {
                 //继续读取
                 while ((currentChar >= 'a' && currentChar <= 'z')
                         || (currentChar >= 'A' && currentChar <= 'Z')
@@ -276,6 +283,12 @@ public class LexicalService {
                     tokenList.add(new Token(90, lineNo));
                 }else if(sbString.equals("scan")){
                     tokenList.add(new Token(91, lineNo));
+                }else if(sbString.equals("for")){
+                    tokenList.add(new Token(97, lineNo));
+                }else if(sbString.equals("continue")){
+                    tokenList.add(new Token(98, lineNo));
+                }else if(sbString.equals("break")){
+                    tokenList.add(new Token(99, lineNo));
                 }else if(sbString.charAt(sbString.length()-1)=='_'){
                     tokenList.add(new Token(-1, sbString+"命名错误,变量名不能以_结尾",lineNo));
                 }

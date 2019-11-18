@@ -72,6 +72,10 @@ public class Token {
             put(92,"&");
             put(93,"|");
             put(94,"^");
+            put(95,",");
+            put(97,"for");
+            put(98,"continue");
+            put(99,"break");
         }
     };
     public int getType() {

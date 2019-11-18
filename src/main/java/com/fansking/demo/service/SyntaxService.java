@@ -26,9 +26,7 @@ public class SyntaxService {
             }else{
                 headNode.getTreeNodes().add(t);
             }
-
         }
-
         return headNode;
     }
     private static TreeNode parseStmt() {
@@ -39,6 +37,8 @@ public class SyntaxService {
             case 1: return parseIfStmt();
             //while
             case 3: return parseWhileStmt();
+            case 97:
+               return parseForStmt();
             //int and real
             //function
             case 4:
@@ -51,12 +51,32 @@ public class SyntaxService {
                 return parsePrintStmt();
             case 91:
                 return parseScanStmt();
+            case 98:
+                consumeNextToken(98);
+                consumeNextToken(21);
+                return new TreeNode(98);
+            case 99:
+                consumeNextToken(99);
+                consumeNextToken(21);
+                return new TreeNode(99);
             default:{
                 //consumeNextToken(type);
                 SyntaxException.addSyntaxException(getNextTokenLineNo(currentToken),"语句首token错误"+(type+getNextTokenValue()));
                 return null;
             }
         }
+    }
+    private static TreeNode parseForStmt(){
+        TreeNode node = new TreeNode(40);
+        consumeNextToken(97,node);
+        consumeNextToken(15,node);
+        node.getTreeNodes().add(parseStmt());
+        node.getTreeNodes().add(parseExp());
+        consumeNextToken(21);
+        node.getTreeNodes().add(parseStmt());
+        consumeNextToken(16,node);
+        node.getTreeNodes().add(parseStmt());
+        return node;
     }
 private static TreeNode parsePrintStmt(){
     TreeNode node = new TreeNode(90);
@@ -107,10 +127,27 @@ private static TreeNode parsePrintStmt(){
         node.getTreeNodes().add(parseExp());
         consumeNextToken(16,node);
         node.getTreeNodes().add(parseStmt());
-        if (getNextTokenType() == 2) {
-            consumeNextToken(2,node);
-            node.getTreeNodes().add(parseStmt());
+        while(getNextTokenType() == 2){
+            consumeNextToken(2);
+            if(getNextTokenType() == 1){
+                TreeNode ifelseNode= new TreeNode(96);
+                node.getTreeNodes().add(ifelseNode);
+
+                consumeNextToken(1);
+                consumeNextToken(15,node);
+                node.getTreeNodes().add(parseExp());
+                consumeNextToken(16,node);
+                node.getTreeNodes().add(parseStmt());
+            }else{
+                node.getTreeNodes().add(new TreeNode(2));
+                node.getTreeNodes().add(parseStmt());
+                break;
+            }
         }
+//        if (getNextTokenType() == 2) {
+//            consumeNextToken(2,node);
+//            node.getTreeNodes().add(parseStmt());
+//        }
         return node;
     }
     /**
@@ -129,6 +166,18 @@ private static TreeNode parsePrintStmt(){
      * 表达式
      */
     private static TreeNode parseExp() {
+        if(checkNextTokenType(17)){
+            TreeNode SNode = new TreeNode(0);
+            consumeNextToken(17);
+            while (!checkNextTokenType(18)){
+                SNode.getTreeNodes().add(parseExp());
+                if(checkNextTokenType(95)){
+                    consumeNextToken(95);
+                }
+            }
+            consumeNextToken(18);
+            return SNode;
+        }
         TreeNode node = new TreeNode(32);
         TreeNode leftNode = addtiveExp();
         if (checkNextTokenType(11,12,13,14,28,29)) {
@@ -150,14 +199,14 @@ private static TreeNode parsePrintStmt(){
         TreeNode node = new TreeNode(33);
         TreeNode leftNode = term();
 //       TreeNode pNode = new TreeNode(33);
-        if (checkNextTokenType(6,7)) {
+        if (checkNextTokenType(6,7,92,93)) {
             node.getTreeNodes().add(leftNode);
             node.getTreeNodes().add(addtiveOp());
             node.getTreeNodes().add(term());
         } else {
             return leftNode;
         }
-        while (checkNextTokenType(6,7)){
+        while (checkNextTokenType(6,7,92,93)){
             TreeNode pNode = new TreeNode(33);
             pNode.getTreeNodes().add(node);
             pNode.getTreeNodes().add(addtiveOp());
@@ -224,6 +273,8 @@ private static TreeNode parsePrintStmt(){
         SyntaxException.addSyntaxException(getNextTokenLineNo(currentToken),"应该有下一个token并且为数字或变量或加减运算符");
         return null;
     }
+
+
     /**
      * 语句block{}
      */
@@ -266,9 +317,6 @@ private static TreeNode parsePrintStmt(){
     private static TreeNode parseDeclareStmt() {
         //可能是函数或定义变量
         TreeNode funNode = new TreeNode(38);
-
-
-
         TreeNode node = new TreeNode(37);
         node.getTreeNodes().add(new TreeNode(getNextTokenType()));
         funNode.getTreeNodes().add(new TreeNode(getNextTokenType()));
@@ -287,7 +335,6 @@ private static TreeNode parsePrintStmt(){
         } else {
             SyntaxException.addSyntaxException(getNextTokenLineNo(currentToken),"缺少标识符");
         }
-
         if(checkNextTokenType(17)){
             varNode.setType(39);
             funNode.getTreeNodes().add(parseStmtBlock());
@@ -295,16 +342,17 @@ private static TreeNode parsePrintStmt(){
         }
         if (getNextTokenType() == 19) {
             //数组
-            consumeNextToken(19,varNode);
-            varNode.getTreeNodes().add(parseExp());
-            consumeNextToken(20,varNode);
+            while (getNextTokenType() == 19){
+                consumeNextToken(19,varNode);
+                varNode.getTreeNodes().add(parseExp());
+                consumeNextToken(20,varNode);
+            }
+
         }
         if (getNextTokenType() == 10) {
             consumeNextToken(10,node);
-
             node.getTreeNodes().add(parseExp());
         }
-
         if (getNextTokenType() == 21) {
             consumeNextToken(21,node);
         }else{
@@ -324,20 +372,27 @@ private static TreeNode parsePrintStmt(){
             SyntaxException.addSyntaxException(getNextTokenLineNo(currentToken),"缺少变量");
         }
         //数组的情况下
-        if (getNextTokenType() == 19) {
+        while (getNextTokenType() == 19){
             consumeNextToken(19,node);
-            //此处可能是定义数组，即[]之间无内容
-            if(getNextTokenType()==20){
-                consumeNextToken(20,node);
-                return node;
-            }else{
-                node.getTreeNodes().add(parseExp());
-            }
-
+            node.getTreeNodes().add(parseExp());
             consumeNextToken(20,node);
         }
+//        if (getNextTokenType() == 19) {
+//
+//
+//            //此处可能是定义数组，即[]之间无内容
+////            if(getNextTokenType()==20){
+////                consumeNextToken(20,node);
+////                return node;
+////            }else{
+//                //node.getTreeNodes().add(parseExp());
+//            //}
+//
+//            consumeNextToken(20,node);
+//        }
         return node;
     }
+
     /**
      * 加减运算符
      */
@@ -345,7 +400,7 @@ private static TreeNode parsePrintStmt(){
         if (iterator.hasNext()) {
             currentToken = iterator.next();
             int type = currentToken.getType();
-            if (type == 6 || type == 7) {
+            if (type == 6 || type == 7||type == 92||type == 93) {
                 return  new TreeNode(type);
 
             }

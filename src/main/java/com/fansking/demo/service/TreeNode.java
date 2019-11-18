@@ -76,8 +76,17 @@ public class TreeNode {
             put(37,"assign_stmt");
             put(38,"method_stmt");
             put(39,"methodName");
+            put(40,"for_stmt");
             put(90,"print");
             put(91,"scan");
+            put(92,"&");
+            put(93,"|");
+            put(94,"^");
+            put(95,",");
+            put(96,"else-if");
+            put(97,"for");
+            put(98,"continue");
+            put(99,"break");
         }
     };
 
